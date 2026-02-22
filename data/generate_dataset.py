@@ -136,7 +136,7 @@ def build_batch(size: int):
 if __name__ == "__main__":
     print("🚀 Gerando dataset...")
 
-    data = build_batch(10_000)
+    data = build_batch(100)
 
     # Salvar o ground truth para validação
     with open("data/dataset.json", "w", encoding="utf-8") as f:

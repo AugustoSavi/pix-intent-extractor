@@ -1,2 +1,4 @@
 Faker
 num2words
+fastapi
+uvicorn

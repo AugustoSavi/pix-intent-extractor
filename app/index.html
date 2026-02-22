@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pix Classifier Test</title>
+    <link type="image/png" sizes="32x32" rel="icon" href="/public/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 800px; margin-top: 50px; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .result-item { margin-bottom: 15px; }
+        .label { font-weight: bold; color: #495057; }
+        .value { color: #212529; }
+        pre { background: #e9ecef; padding: 15px; border-radius: 5px; max-height: 300px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mb-4">Classificador Chave-Valor PIX</h2>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="pixText" class="form-label">Insira o texto para classificação:</label>
+                    <textarea class="form-control" id="pixText" rows="5" placeholder="Ex: Manda um pix de 50 reais pro cpf 123.456.789-00"></textarea>
+                </div>
+                <button id="btnClassify" class="btn btn-primary w-100">Classificar</button>
+            </div>
+        </div>
+
+        <div id="results" class="card d-none">
+            <div class="card-header bg-success text-white">
+                Resultado da Classificação
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 result-item">
+                        <div class="label">Valor:</div>
+                        <div id="resValor" class="value">-</div>
+                    </div>
+                    <div class="col-md-6 result-item">
+                        <div class="label">Chave:</div>
+                        <div id="resChave" class="value">-</div>
+                    </div>
+                    <div class="col-md-6 result-item">
+                        <div class="label">Tipo de Chave:</div>
+                        <div id="resTipoChave" class="value">-</div>
+                    </div>
+                    <div class="col-md-6 result-item">
+                        <div class="label">Ambíguo:</div>
+                        <div id="resAmbiguo" class="value">-</div>
+                    </div>
+                </div>
+                
+                <hr>
+                <h5>JSON Bruto</h5>
+                <pre id="rawJson"></pre>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                Resultados Anteriores
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Texto Original</th>
+                                <th>Valor</th>
+                                <th>Chave</th>
+                                <th>Tipo Chave</th>
+                                <th>Ambíguo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previousResultsTableBody">
+                            <!-- Results will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <p id="noResultsMessage" class="text-center text-muted d-none">Nenhum resultado anterior encontrado.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPreviousResults();
+        });
+
+        function renderResultRow(item, prepend = false) {
+            const tableBody = document.getElementById('previousResultsTableBody');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            noResultsMessage.classList.add('d-none');
+
+            const row = prepend ? tableBody.insertRow(0) : tableBody.insertRow();
+            row.insertCell().textContent = item.texto_original || 'N/A';
+            row.insertCell().textContent = item.valor || 'N/A';
+            row.insertCell().textContent = item.chave || 'N/A';
+            row.insertCell().textContent = item.tipo_chave || 'N/A';
+            
+            const ambiguoCell = row.insertCell();
+            const ambiguoBadge = item.ambiguo 
+                ? '<span class="badge bg-warning text-dark">Sim</span>' 
+                : '<span class="badge bg-secondary">Não</span>';
+            ambiguoCell.innerHTML = ambiguoBadge;
+            
+            if (prepend) {
+                row.classList.add('table-success');
+                setTimeout(() => row.classList.remove('table-success'), 2000);
+            }
+        }
+
+        async function fetchPreviousResults() {
+            const tableBody = document.getElementById('previousResultsTableBody');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            tableBody.innerHTML = ''; // Clear existing content
+
+            try {
+                const response = await fetch('/results');
+                if (!response.ok) throw new Error('Falha ao carregar resultados anteriores');
+                
+                let results = await response.json();
+
+                if (results.length === 0) {
+                    noResultsMessage.classList.remove('d-none');
+                    return;
+                }
+
+                results.forEach(item => renderResultRow(item));
+
+            } catch (error) {
+                console.error('Erro ao buscar resultados anteriores:', error);
+                noResultsMessage.textContent = 'Erro ao carregar resultados.';
+                noResultsMessage.classList.remove('d-none');
+            }
+        }
+
+        document.getElementById('btnClassify').addEventListener('click', async () => {
+            const text = document.getElementById('pixText').value;
+            const btn = document.getElementById('btnClassify');
+            const resultsDiv = document.getElementById('results');
+
+            if (!text.trim()) {
+                alert('Por favor, insira um texto.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Classificando...';
+
+            try {
+                const response = await fetch('/classify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                if (!response.ok) throw new Error('Falha na resposta do servidor');
+
+                const data = await response.json();
+                
+                document.getElementById('resValor').textContent = data.valor || 'Não encontrado';
+                document.getElementById('resChave').textContent = data.chave || 'Não encontrada';
+                document.getElementById('resTipoChave').textContent = data.tipo_chave || 'N/A';
+                
+                const ambiguoBadge = data.ambiguo 
+                    ? '<span class="badge bg-warning text-dark">Sim</span>' 
+                    : '<span class="badge bg-secondary">Não</span>';
+                document.getElementById('resAmbiguo').innerHTML = ambiguoBadge;
+                
+                document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+                
+                resultsDiv.classList.remove('d-none');
+                
+                // Add to the table
+                renderResultRow(data, true);
+                
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Classificar';
+            }
+        });
+    </script>
+</body>
+</html>

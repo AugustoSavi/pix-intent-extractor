@@ -1,12 +1,16 @@
 # 🔑 Extrator de PIX (Valor + Chave)
 
-Projeto em **Python** transformado em **biblioteca** para **extração automática de pedidos de PIX** a partir de texto livre (mensagens informais, WhatsApp, etc.), identificando:
+Projeto em **Python** para **extração automática de pedidos de PIX** a partir de texto livre (mensagens informais, WhatsApp, etc.), identificando:
 
 * 💰 **Valor do PIX** (número ou por extenso)
 * 🧾 **Chave PIX** (email, CPF, telefone ou UUID)
-* ⚠️ **Ambiguidade numérica** (ex: múltiplos CPFs no texto)
+* ⚠️ **Ambiguidade numérica** (ex: valor e chave igual no texto)
 
-O projeto combina **regex**, **normalização linguística** e **conversão de números por extenso**, além de um **gerador de dataset sintético** para NLP.
+O projeto combina **regex**, **normalização linguística** e **conversão de números por extenso**, além de um **gerador de dataset sintético**.
+
+---
+
+![image](.github/resources/image.png)
 
 ---
 
@@ -21,8 +25,7 @@ O projeto combina **regex**, **normalização linguística** e **conversão de n
   * Telefone
   * UUID
 * ✅ Prioriza automaticamente o tipo de chave mais confiável
-* ✅ Detecta ambiguidade quando múltiplos CPFs válidos aparecem
-* ✅ Geração de dataset sintético realista para treinamento NLP
+* ✅ Detecta ambiguidade
 
 ---
 
@@ -109,13 +112,15 @@ Para processar o dataset e validar a acurácia do extrator:
    ```
    O script comparará os resultados obtidos com o gabarito no dataset.
 
-### ⚡ Teste Automatizado (Recomendado)
+### ⚡ Teste completo (Recomendado)
 
 O projeto inclui um script `test.sh` que facilita todo o processo. Ele **cria e ativa automaticamente um ambiente virtual (venv)** e instala as dependências se necessário antes de rodar os testes.
 
 ```bash
 bash test.sh
 ```
+
+Isso também vai subir o servidor na porta 8080
 
 ---
 

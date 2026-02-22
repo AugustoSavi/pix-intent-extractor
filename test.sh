@@ -21,3 +21,6 @@ python data/run_dataset.py
 
 echo "Validating results..."
 python data/validate_results.py
+
+echo "Starting FastAPI server..."
+python app/main.py
