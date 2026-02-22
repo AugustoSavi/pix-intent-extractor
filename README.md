@@ -1,6 +1,6 @@
 # 🔑 Extrator de PIX (Valor + Chave)
 
-Projeto em **Python** para **extração automática de pedidos de PIX** a partir de texto livre (mensagens informais, WhatsApp, etc.), identificando:
+Projeto em **Python** transformado em **biblioteca** para **extração automática de pedidos de PIX** a partir de texto livre (mensagens informais, WhatsApp, etc.), identificando:
 
 * 💰 **Valor do PIX** (número ou por extenso)
 * 🧾 **Chave PIX** (email, CPF, telefone ou UUID)
@@ -26,39 +26,31 @@ O projeto combina **regex**, **normalização linguística** e **conversão de n
 
 ---
 
-## 🧠 Pipeline de Extração
-
-Fluxo principal (`extrair_pix`):
-
-1. Normaliza o texto
-2. Converte números por extenso em valores numéricos
-3. Extrai valores monetários via regex
-4. Extrai possíveis chaves PIX
-5. Valida CPF quando aplicável
-6. Resolve prioridade da chave
-7. Marca ambiguidade numérica, se houver
-
----
-
 ## 📦 Estrutura do Projeto
 
 ```text
 .
-├── regex.py                     # Pipeline principal de extração PIX
-├── utils/
-│   └── conversor_extenso.py     # Conversão de números por extenso
+├── pix_classifier/              # Pacote da biblioteca
+│   ├── classifier.py            # Pipeline principal de extração
+│   └── utils/                   # Utilitários de extração e conversão
 ├── data/
 │   ├── generate_dataset.py      # Gerador de dataset sintético
-│   ├── dataset.txt              # Mensagens geradas
-│   └── resultados.json          # Saída da extração
+│   ├── run_dataset.py           # Script para processar o dataset
+│   ├── dataset.json             # Dataset com mensagens e ground truth
+│   ├── resultados.json          # Saída da extração
+│   └── validate_results.py      # Validador de acurácia
+├── pyproject.toml               # Configuração do pacote Python
+└── test.sh                      # Script de teste completo (com auto-venv)
 ```
 
 ---
 
 ## 🚀 Exemplo de Uso
 
+Como biblioteca:
+
 ```python
-from regex import extrair_pix
+from pix_classifier import extrair_pix
 
 texto = "faz um pix de dez reais e cinquenta centavos pra teste@email.com"
 
@@ -97,37 +89,43 @@ O script `generate_dataset.py` cria milhares de mensagens realistas de PIX com:
 python data/generate_dataset.py
 ```
 
-Isso irá gerar:
-
-* `data/dataset.txt` → mensagens cruas
+Isso irá gerar `data/dataset.json`.
 
 ---
 
-## 🧩 Casos Tratados
+## 📊 Execução e Validação
 
-* `R$ 1.234,56`
-* `1234.56`
-* `mil duzentos reais`
-* `dois reais e cinquenta centavos`
-* CPF com ou sem máscara
-* Telefone com ou sem DDI / pontuação
+Para processar o dataset e validar a acurácia do extrator:
 
----
+1. **Processar Dataset:**
+   ```bash
+   python data/run_dataset.py
+   ```
+   Isso lerá `data/dataset.json` e gerará `data/resultados.json`.
 
-## ⚠️ Ambiguidade Numérica
+2. **Validar Resultados:**
+   ```bash
+   python data/validate_results.py
+   ```
+   O script comparará os resultados obtidos com o gabarito no dataset.
 
-Se o texto contiver **dois ou mais CPFs válidos**, o campo:
+### ⚡ Teste Automatizado (Recomendado)
 
-```json
-"ambiguo": true
+O projeto inclui um script `test.sh` que facilita todo o processo. Ele **cria e ativa automaticamente um ambiente virtual (venv)** e instala as dependências se necessário antes de rodar os testes.
+
+```bash
+bash test.sh
 ```
 
-será marcado para indicar necessidade de validação adicional.
-
 ---
 
-## 🛠 Dependências
+## 🛠 Instalação
 
-Principais libs usadas:
-
-* `num2words`
+Para instalar as dependências:
+```bash
+pip install .
+```
+ou
+```bash
+pip install -r requirements.txt
+```

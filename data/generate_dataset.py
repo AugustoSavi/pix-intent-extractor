@@ -1,8 +1,12 @@
-import random
+import sys
 import os
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import random
+import json
 from faker import Faker
 from num2words import num2words
+
+# Adiciona o diretório raiz do projeto ao sys.path para importações
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # ------------------ SETUP ------------------
 
@@ -39,26 +43,45 @@ TEMPLATES = [
     "manda o pix {valor} pra {chave}",
     "transferência pix {valor} {chave}",
     "{valor} {chave}",
-    "{chave} {valor}"
+    "{chave} {valor}",
+    "[{timestamp}] {nome}: Me manda {valor} no pix\\n[{timestamp}] {nome}: {chave}",
+    "[{timestamp}] {nome}: Me manda {valor}\\n[{timestamp}] {nome}: {chave}",
+    "[{timestamp}] {nome}: {chave}\\n[{timestamp}] {nome}: Me manda {valor}",
+    "{chave}",
+    "{valor}"
 ]
-
 
 # ------------------ GERADORES ------------------
 
-def gerar_valor():
-    valor = round(random.uniform(0.01, 1_000_000), 2)
+def gerar_valor_com_meta():
+    if random.choice([True, False]):
+        valor = float(random.randint(1, 1000)) # Valores menores para evitar ambiguidades com pontos de milhar por enquanto
+    else:
+        valor = round(random.uniform(0.01, 1_000_000), 2)
+
     reais = int(valor)
     centavos = int(round((valor - reais) * 100))
 
     if random.choice([True, False]):
+        # Formato numérico
+        if centavos == 0 and random.choice([True, False]):
+            fmt = f"{reais:,}".replace(",", ".")
+        else:
+            fmt = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
         if random.choice([True, False]):
-            return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            txt = fmt
+        else:
+            txt = f"R$ {fmt}"
     else:
-        texto = num2words(reais, lang="pt_BR") + " reais"
+        # Formato extenso
+        txt = num2words(reais, lang="pt_BR") + " reais"
         if centavos > 0:
-            texto += " e " + num2words(centavos, lang="pt_BR") + " centavos"
-        return texto
+            txt += " e " + num2words(centavos, lang="pt_BR") + " centavos"
+    
+    # O valor esperado para o validador deve ser a string formatada BR que o regex extrai
+    valor_esperado = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return txt, valor_esperado
 
 
 def gerar_chave_pix(fake: Faker):
@@ -83,74 +106,40 @@ def gerar_chave_pix(fake: Faker):
 
 # ------------------ WORKER ------------------
 
-def build_batch(batch_size: int):
+def build_batch(size: int):
     fake = Faker("pt_BR")
     batch = []
 
-    for _ in range(batch_size):
-        valor = gerar_valor()
+    for _ in range(size):
+        texto_valor, valor_esperado = gerar_valor_com_meta()
         chave = gerar_chave_pix(fake)
+        nome = fake.name()
+        timestamp = fake.date_time_this_year().strftime("%d/%m, %H:%M")
         template = random.choice(TEMPLATES)
 
-        text = template.format(valor=valor, chave=chave)
+        text = template.format(valor=texto_valor, chave=chave, nome=nome, timestamp=timestamp)
 
-        valor_start = text.find(valor)
-        chave_start = text.find(chave)
+        # Determina o que realmente está no texto para o ground truth
+        valor_gt = valor_esperado if "{valor}" in template or template == "{valor}" else None
+        chave_gt = chave if "{chave}" in template or template == "{chave}" else None
 
-        # segurança extra
-        if valor_start == -1 or chave_start == -1:
-            continue
-
-        entities = [
-            (valor_start, valor_start + len(valor), "PIX_VALUE"),
-            (chave_start, chave_start + len(chave), "PIX_KEY"),
-        ]
-
-        batch.append((text, {"entities": entities}))
+        batch.append({
+            "text": text,
+            "valor": valor_gt,
+            "chave": chave_gt
+        })
 
     return batch
-
-# ------------------ DATASET MULTIPROCESS ------------------
-
-def build_examples_multiprocess(
-    total=50_000,
-    workers=8,
-    batch_size=500
-):
-    examples = []
-
-    batches = total // batch_size
-    remainder = total % batch_size
-
-    with ProcessPoolExecutor(max_workers=workers) as executor:
-        futures = [
-            executor.submit(build_batch, batch_size)
-            for _ in range(batches)
-        ]
-
-        if remainder:
-            futures.append(executor.submit(build_batch, remainder))
-
-        for future in as_completed(futures):
-            examples.extend(future.result())
-
-    return examples
 
 # ------------------ MAIN ------------------
 
 if __name__ == "__main__":
     print("🚀 Gerando dataset...")
 
-    data = build_examples_multiprocess(
-        total=10_000,
-        workers=min(8, os.cpu_count()),
-        batch_size=500
-    )
+    data = build_batch(10_000)
 
-    random.shuffle(data)
-    # Salvar o resultado em arquivo txt
-    open("data/dataset.txt", "w").write(
-        "\n".join([f"{text}" for text, annot in data])
-    )
+    # Salvar o ground truth para validação
+    with open("data/dataset.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print("✅ Dataset gerado com sucesso.")
+    print("✅ Dataset e Ground Truth gerados com sucesso.")
