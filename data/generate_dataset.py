@@ -11,6 +11,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # ------------------ SETUP ------------------
 
 TEMPLATES = [
+
+    # =========================
+    # ORIGINAIS
+    # =========================
     "Enviar {valor} para {chave}",
     "Pode mandar {valor} no pix do {chave}",
     "Pix de {valor} chave {chave}",
@@ -44,11 +48,139 @@ TEMPLATES = [
     "transferência pix {valor} {chave}",
     "{valor} {chave}",
     "{chave} {valor}",
-    "[{timestamp}] {nome}: Me manda {valor} no pix\\n[{timestamp}] {nome}: {chave}",
-    "[{timestamp}] {nome}: Me manda {valor}\\n[{timestamp}] {nome}: {chave}",
-    "[{timestamp}] {nome}: {chave}\\n[{timestamp}] {nome}: Me manda {valor}",
+    "[{timestamp}] {nome}: Me manda {valor} no pix\n[{timestamp}] {nome}: {chave}",
+    "[{timestamp}] {nome}: Me manda {valor}\n[{timestamp}] {nome}: {chave}",
+    "[{timestamp}] {nome}: {chave}\n[{timestamp}] {nome}: Me manda {valor}",
     "{chave}",
-    "{valor}"
+    "{valor}",
+    "me manda um pix de {valor} {chave}",
+    "manda um pix de {valor} pra {chave}",
+    "envia um pix de {valor} pra {chave}",
+    "passa um pix de {valor} pra {chave}",
+    "consegue mandar um pix de {valor} pra {chave}?",
+    "pix de {valor} pra {chave}",
+    "me paga no pix {valor} pra {chave}",
+
+    # =========================
+    # ORDEM AMBIGUA
+    # =========================
+    "{chave} - {valor}",
+    "{valor} - {chave}",
+    "{valor} -> {chave}",
+    "{chave} <- {valor}",
+    "{valor} / {chave}",
+    "{chave} / {valor}",
+    "{valor} | {chave}",
+    "{chave} | {valor}",
+    "{valor} : {chave}",
+    "{chave} : {valor}",
+    "{chave} {chave} {valor}",
+
+    # =========================
+    # TEXTO COM RUIDO
+    # =========================
+    "manda aí {valor} rapidinho no pix que te passei {chave}",
+    "cara consegue {valor} naquele pix lá {chave}?",
+    "é aquele pix {chave} mesmo, valor {valor}",
+    "lembra da chave {chave}? manda {valor}",
+    "{valor} naquela chave antiga {chave}",
+    "usa a chave nova {chave} pra enviar {valor}",
+    "manda no pix de sempre {chave} o valor {valor}",
+    "preciso disso urgente {valor} porque deu ruim aqui {chave}",
+    "{valor} é o valor, a chave tá aqui {chave}",
+    "anota aí {valor} depois usa {chave}",
+    "{valor} amanhã cedo no pix {chave} beleza?",
+    "confirma {valor} antes de enviar pra {chave}",
+
+    # =========================
+    # CONVERSA FRAGMENTADA
+    # =========================
+    "{valor}?\n{chave}",
+    "{chave}\n{valor}",
+    "{valor}\n\n{chave}",
+    "{chave}\n\nmanda {valor}",
+    "manda\n{valor}\nno pix\n{chave}",
+    "{valor} no pix\nok?\n{chave}",
+
+    # =========================
+    # ABREVIACOES / GIRIAS
+    # =========================
+    "faz o px de {valor} pra {chave}",
+    "manda o p x {valor} {chave}",
+    "transf {valor} p/ {chave}",
+    "pixar {valor} em {chave}",
+    "px {valor} chave {chave}",
+    "env {valor} pix {chave}",
+    "manda {valor} p {chave}",
+    "{valor} p/ {chave}",
+
+    "faz o px de {valor} mangos pra {chave}",
+    "manda o p x {valor} rubius {chave}",
+    "transf {valor} cruzeiros p/ {chave}",
+    "pixar {valor} em {chave}",
+    "px {valor} reais chave {chave}",
+    "env {valor} dindis pix {chave}",
+    "manda {valor} p {chave}",
+    "{valor} p/ {chave}",
+
+    # =========================
+    # FORMATO DE VALOR DIFERENTE
+    # =========================
+    "manda R${valor} no pix {chave}",
+    "envia {valor} reais chave {chave}",
+    "pix de R$ {valor} para {chave}",
+    "{valor} no pix {chave}",
+    "BRL {valor} chave {chave}",
+
+    # =========================
+    # EMOJIS / SIMBOLOS
+    # =========================
+    "💸 {valor} 👉 {chave}",
+    "{chave} 💰 {valor}",
+    "manda {valor} 🔑 {chave}",
+    "pix {valor} ➡️ {chave}",
+    "{valor} 😅 pix {chave}",
+    "📲 {chave} valor {valor}",
+
+    # =========================
+    # CASOS EXTREMOS
+    # =========================
+    "{valor} - {chave}",
+    "{chave} - {valor}",
+    "{valor} _ {chave}",
+    "{chave} _ {valor}",
+    "{valor} ... {chave}",
+    "{chave} ... {valor}",
+    "{valor}\t{chave}",
+    "{chave}\t{valor}",
+
+    # =========================
+    # TIMESTAMP BAGUNCADO
+    # =========================
+    "[{timestamp}] {valor} -> pix\n[{timestamp}] chave: {chave}",
+    "[{timestamp}] chave {chave}\nvalor {valor}",
+    "{timestamp} {chave} {valor}",
+    "{timestamp} manda {valor} pix {chave}",
+
+    # =========================
+    # SUPER MINIMALISTA
+    # =========================
+    "{valor}",
+    "{chave}",
+    "{valor}?",
+    "{chave}?",
+    "{valor} {chave} urgente",
+    "{chave} urgente {valor}",
+
+    # =========================
+    # EXTRA CAOTICOS
+    # =========================
+    "Oi... {valor} 😅 no pix... chave >>> {chave} <<< urgente!!!",
+    "!!! {valor} ### {chave} $$$",
+    "{valor}???{chave}",
+    "{chave}???{valor}",
+    "{valor}///{chave}",
+    "{chave}///{valor}",
 ]
 
 # ------------------ GERADORES ------------------
@@ -136,7 +268,7 @@ def build_batch(size: int):
 if __name__ == "__main__":
     print("🚀 Gerando dataset...")
 
-    data = build_batch(100)
+    data = build_batch(10000)
 
     # Salvar o ground truth para validação
     with open("data/dataset.json", "w", encoding="utf-8") as f:
